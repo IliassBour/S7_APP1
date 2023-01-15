@@ -1,1 +1,1 @@
-# S7_APP1
+# dnn_framework
