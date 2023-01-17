@@ -18,10 +18,19 @@ class FullyConnectedLayer(Layer):
         raise NotImplementedError()
 
     def forward(self, x):
-        raise NotImplementedError()
+        self.y = x @ self.w.T + self.b
+
+        return self.y
 
     def backward(self, output_grad, cache):
-        raise NotImplementedError()
+        #dL/dX
+        self.input_grad = output_grad @ self.w
+        #dL/dW
+        self.w_grad = output_grad.T @ cache # x
+        #dL/dB
+        self.b_grad = np.sum(output_grad, axis=0)
+
+        return self.input_grad, self.w_grad, self.b_grad
 
 
 class BatchNormalization(Layer):
@@ -63,10 +72,15 @@ class Sigmoid(Layer):
         raise NotImplementedError()
 
     def forward(self, x):
-        raise NotImplementedError()
+        self.y = 1/(1+np.exp(-x))
+
+        return self.y
 
     def backward(self, output_grad, cache):
-        raise NotImplementedError()
+        self.y_grad = (1 - self.y) * self.y
+        self.y_grad *= output_grad
+
+        return self.y_grad
 
 
 class ReLU(Layer):
@@ -81,7 +95,15 @@ class ReLU(Layer):
         raise NotImplementedError()
 
     def forward(self, x):
-        raise NotImplementedError()
+        self.y = np.array(x)
+        self.y[self.y < 0] = 0
+
+        return self.y
 
     def backward(self, output_grad, cache):
-        raise NotImplementedError()
+        self.y_grad = np.array(cache) # x
+        self.y_grad[self.y_grad < 0] = 0
+        self.y_grad[self.y_grad > 0] = 1
+        self.y_grad *= output_grad
+
+        return self.y_grad
