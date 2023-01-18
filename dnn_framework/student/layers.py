@@ -66,15 +66,15 @@ class Sigmoid(Layer):
     """
 
     def get_parameters(self):
-        raise NotImplementedError()
+        return {"y": self.y, "y_grad": self.y_grad}
 
     def get_buffers(self):
-        raise NotImplementedError()
+        raise self.get_parameters()
 
     def forward(self, x):
         self.y = 1/(1+np.exp(-x))
 
-        return self.y
+        return self.y, {"y": self.y}
 
     def backward(self, output_grad, cache):
         self.y_grad = (1 - self.y) * self.y
@@ -98,12 +98,16 @@ class ReLU(Layer):
         self.y = np.array(x)
         self.y[self.y < 0] = 0
 
-        return self.y
+        return self.y, x
 
     def backward(self, output_grad, cache):
         self.y_grad = np.array(cache) # x
-        self.y_grad[self.y_grad < 0] = 0
-        self.y_grad[self.y_grad > 0] = 1
+        with np.nditer(self.y_grad, op_flags=['readwrite']) as it:
+            for element in it:
+                if element[...] < 0:
+                    element[...] = 0
+                else:
+                    element[...] = 1
         self.y_grad *= output_grad
 
         return self.y_grad
