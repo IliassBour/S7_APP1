@@ -106,10 +106,10 @@ class ReLU(Layer):
     """
 
     def get_parameters(self):
-        raise NotImplementedError()
+        return {"y": self.y}
 
     def get_buffers(self):
-        raise NotImplementedError()
+        return self.get_parameters()
 
     def forward(self, x):
         self.y = np.array(x)
@@ -127,4 +127,4 @@ class ReLU(Layer):
                     element[...] = 1
         self.y_grad *= output_grad
 
-        return self.y_grad
+        return self.y_grad, {"y_grad": self.y_grad}
