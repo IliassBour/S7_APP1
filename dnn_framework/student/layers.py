@@ -79,7 +79,7 @@ class Sigmoid(Layer):
     """
 
     def get_parameters(self):
-        return {"y": self.y, "y_grad": self.y_grad}
+        return {"y": self.y}
 
     def get_buffers(self):
         raise self.get_parameters()
@@ -93,7 +93,11 @@ class Sigmoid(Layer):
         self.y_grad = (1 - self.y) * self.y
         self.y_grad *= output_grad
 
-        return self.y_grad
+        r_dict = {
+            "y": self.y_grad
+        }
+
+        return self.y_grad, r_dict
 
 
 class ReLU(Layer):
