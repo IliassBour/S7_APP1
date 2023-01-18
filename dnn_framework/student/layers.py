@@ -9,28 +9,41 @@ class FullyConnectedLayer(Layer):
     """
 
     def __init__(self, input_count, output_count):
-        raise NotImplementedError()
+        self.input_count = input_count
+        self.output_count = output_count
+        self.w = np.zeros((output_count, input_count))
+        self.b = np.zeros(output_count)
 
     def get_parameters(self):
-        raise NotImplementedError()
+        r_dict = {
+            "w": self.w,
+            "b": self.b
+        }
+        return r_dict
 
     def get_buffers(self):
-        raise NotImplementedError()
+        return self.get_parameters()
 
     def forward(self, x):
         self.y = x @ self.w.T + self.b
+        r_dict = {"X": x}
 
-        return self.y
+        return self.y, r_dict
 
     def backward(self, output_grad, cache):
         #dL/dX
         self.input_grad = output_grad @ self.w
         #dL/dW
-        self.w_grad = output_grad.T @ cache # x
+        self.w_grad = output_grad.T @ cache['X'][:]  # x
         #dL/dB
         self.b_grad = np.sum(output_grad, axis=0)
 
-        return self.input_grad, self.w_grad, self.b_grad
+        r_dict = {
+            "w": self.w_grad,
+            "b": self.b_grad
+        }
+
+        return self.input_grad, r_dict
 
 
 class BatchNormalization(Layer):
