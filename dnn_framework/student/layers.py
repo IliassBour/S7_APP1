@@ -34,7 +34,7 @@ class FullyConnectedLayer(Layer):
         #dL/dX
         self.input_grad = output_grad @ self.w
         #dL/dW
-        self.w_grad = output_grad.T @ cache['X'][:]  # x
+        self.w_grad = output_grad.T @ cache['X'][:]
         #dL/dB
         self.b_grad = np.sum(output_grad, axis=0)
 
@@ -52,22 +52,56 @@ class BatchNormalization(Layer):
     """
 
     def __init__(self, input_count, alpha=0.1):
-        raise NotImplementedError()
+        self.input_count = input_count
+        self.alpha = alpha
+        self.epsilon = 1e-42 ### MAY NEED TO PUT A SMALLER NUMBER
+        self.gamma = np.zeros(input_count)
+        self.beta = np.zeros(input_count)
+        self.global_mean = []
+        self.global_variance = []
 
     def get_parameters(self):
-        raise NotImplementedError()
+        r_dic = {
+            "global_mean": self.global_mean,
+            "global_variance": self.global_variance,
+            "gamma": self.gamma,
+            "beta": self.beta,
+            "epsilon": self.epsilon
+        }
+        return r_dic
 
     def get_buffers(self):
-        raise NotImplementedError()
+        return self.get_parameters()
 
     def forward(self, x):
-        raise NotImplementedError()
+        mean = np.mean(x)
+        variance = np.var(x)
+
+        if not self.global_mean:
+            self.global_mean = mean
+        else:
+            self.global_mean = (1 - self.alpha)*self.global_mean + self.alpha*mean
+
+        if not self.global_variance:
+            self.global_variance = variance
+        else:
+            self.global_variance = (1 - self.alpha)*self.global_variance + self.alpha*variance
+
+        x_calc = np.zeros_like(x)
+        with np.nditer(x_calc, op_flags=['readwrite']) as it:
+            for x in np.nditer(x, op_flags=['readwrite']):
+                it = (x-self.global_mean)/(self.global_variance+self.epsilon) ###division-wise
+                it.iternext()
+
+        y = self.gamma * x_calc + self.beta ###multiplication-wise
+
+        return y, {}
 
     def _forward_training(self, x):
-        raise NotImplementedError()
+        return 0
 
     def _forward_evaluation(self, x):
-        raise NotImplementedError()
+        return 0
 
     def backward(self, output_grad, cache):
         raise NotImplementedError()
