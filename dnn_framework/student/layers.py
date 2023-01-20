@@ -51,14 +51,14 @@ class BatchNormalization(Layer):
     This class implements a batch normalization layer.
     """
 
-    def __init__(self, input_count, alpha=0.1):
+    def __init__(self, input_count, alpha=0.10):
         self.input_count = input_count
         self.alpha = alpha
         self.epsilon = 1e-42 ### MAY NEED TO PUT A SMALLER NUMBER
         self.gamma = np.zeros(input_count)
-        self.beta = np.zeros(input_count)
-        self.global_mean = []
-        self.global_variance = []
+        self.beta = np.ones(input_count)
+        self.global_mean = np.zeros(input_count)
+        self.global_variance = np.zeros(input_count)
 
     def get_parameters(self):
         r_dic = {
@@ -74,38 +74,95 @@ class BatchNormalization(Layer):
         return self.get_parameters()
 
     def forward(self, x):
-        mean = np.mean(x)
-        variance = np.var(x)
+        if np.all(self.global_mean == 0):
+            self.global_mean = np.mean(x, axis=0)
 
-        if not self.global_mean:
-            self.global_mean = mean
-        else:
-            self.global_mean = (1 - self.alpha)*self.global_mean + self.alpha*mean
+        if np.all(self.global_variance == 0):
+            self.global_variance = np.var(x, axis=0)
 
-        if not self.global_variance:
-            self.global_variance = variance
-        else:
-            self.global_variance = (1 - self.alpha)*self.global_variance + self.alpha*variance
+        x_norm = (x - self.global_mean)
+        square = np.sqrt(self.global_variance + self.epsilon)
+        x_calc = x_norm / square
+        self.y = self.gamma * x_calc + self.beta  ###multiplication-wise
 
-        x_calc = np.zeros_like(x)
-        with np.nditer(x_calc, op_flags=['readwrite']) as it:
-            for x in np.nditer(x, op_flags=['readwrite']):
-                it = (x-self.global_mean)/(self.global_variance+self.epsilon) ###division-wise
-                it.iternext()
+        rdic = {
+            "y": self.y,
+            "x_calc": x_calc,
+            "x": x,
+            "x_norm": x_norm,
+            "square": square
+        }
 
-        y = self.gamma * x_calc + self.beta ###multiplication-wise
-
-        return y, {}
+        return self.y, rdic
 
     def _forward_training(self, x):
-        return 0
+        mean = np.mean(x, axis=0)
+        variance = np.var(x, axis=0)
+
+        if np.all(self.global_mean == 0):
+            self.global_mean = mean
+        else:
+            self.global_mean = (1 - self.alpha) * self.global_mean + self.alpha * mean
+
+        if np.all(self.global_variance == 0):
+            self.global_variance = variance
+        else:
+            self.global_variance = (1.0 - self.alpha) * np.float_(self.global_variance) + self.alpha * variance
+
+        x_norm = (x - self.global_mean)
+        square = np.sqrt(self.global_variance + self.epsilon)
+        x_calc = x_norm / square
+        self.y = self.gamma * x_calc + self.beta  ###multiplication-wise
+
+        rdic = {
+            "y": self.y,
+            "x_calc": x_calc,
+            "x": x,
+            "x_norm": x_norm,
+            "square": square
+        }
+
+        return self.y, rdic
 
     def _forward_evaluation(self, x):
-        return 0
+        x_norm = (x - self.global_mean)
+        square = np.sqrt(self.global_variance + self.epsilon)
+        x_calc = x_norm / square
+        self.y = self.gamma * x_calc + self.beta  ###multiplication-wise
+
+        rdic = {
+            "y": self.y,
+            "x_calc": x_calc,
+            "x": x,
+            "x_norm": x_norm,
+            "square": square
+        }
+
+        return self.y, rdic
 
     def backward(self, output_grad, cache):
-        raise NotImplementedError()
+        x_calc = cache["x_calc"]
+        x = cache['x']
+        x_norm = cache["x_norm"]
+        square = cache["square"]
+        M = np.shape(output_grad)[0] * np.shape(output_grad)[1]
 
+        gamma_grad = np.sum((output_grad * x_calc), axis=0)
+        beta_grad = np.sum(output_grad, axis=0)
+
+        x_calc_grad = output_grad * self.gamma
+        x_norm_grad = x_calc_grad / square
+        mean_grad = -1 * np.sum(x_norm_grad, axis=0)
+        square_grad = np.sum(x_calc_grad * x_norm * -square**(-2), axis=0)
+        var_grad = square_grad / 2 / square
+        x_grad = x_calc_grad/square + 1/M * (2 * var_grad * x_norm + mean_grad)
+
+        rdic = {
+            "gamma": gamma_grad,
+            "beta": beta_grad
+        }
+
+        return x_grad, rdic
 
 class Sigmoid(Layer):
     """
