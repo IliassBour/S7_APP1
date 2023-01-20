@@ -203,13 +203,9 @@ class ReLU(Layer):
         return self.y, x
 
     def backward(self, output_grad, cache):
-        self.y_grad = np.array(cache) # x
-        with np.nditer(self.y_grad, op_flags=['readwrite']) as it:
-            for element in it:
-                if element[...] < 0:
-                    element[...] = 0
-                else:
-                    element[...] = 1
+        self.y_grad = np.array(cache)
+        self.y_grad[:][self.y_grad < 0] = 0
+        self.y_grad[:][self.y_grad > 0] = 1
         self.y_grad *= output_grad
 
         return self.y_grad, {"y": self.y_grad}
