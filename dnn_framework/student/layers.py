@@ -147,7 +147,10 @@ class BatchNormalization(Layer):
 
         rdic = {
             "gamma": gamma_grad,
-            "beta": beta_grad
+            "beta": beta_grad,
+            "global_mean": self.global_mean,
+            "global_variance": self.global_variance,
+            "epsilon": self.epsilon
         }
 
         return x_grad, rdic
