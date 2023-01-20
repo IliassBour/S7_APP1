@@ -170,7 +170,8 @@ class Sigmoid(Layer):
     """
 
     def get_parameters(self):
-        return {"y": self.y}
+        #return {"y": self.y}
+        return {"y": 0}
 
     def get_buffers(self):
         raise self.get_parameters()
@@ -197,7 +198,8 @@ class ReLU(Layer):
     """
 
     def get_parameters(self):
-        return {"y": self.y}
+        #return {"y": self.y}
+        return {"y": 0}
 
     def get_buffers(self):
         return self.get_parameters()
