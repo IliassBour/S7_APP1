@@ -13,6 +13,7 @@ class FullyConnectedLayer(Layer):
         self.output_count = output_count
         self.w = np.zeros((output_count, input_count))
         self.b = np.zeros(output_count)
+        super().__init__()
 
     def get_parameters(self):
         r_dict = {
@@ -59,6 +60,7 @@ class BatchNormalization(Layer):
         self.beta = np.ones(input_count)
         self.global_mean = np.zeros(input_count)
         self.global_variance = np.zeros(input_count)
+        super().__init__()
 
     def get_parameters(self):
         r_dic = {
@@ -74,24 +76,10 @@ class BatchNormalization(Layer):
         return self.get_parameters()
 
     def forward(self, x):
-        if np.all(self.global_mean == 0):
-            self.global_mean = np.mean(x, axis=0)
-
-        if np.all(self.global_variance == 0):
-            self.global_variance = np.var(x, axis=0)
-
-        x_norm = (x - self.global_mean)
-        square = np.sqrt(self.global_variance + self.epsilon)
-        x_calc = x_norm / square
-        self.y = self.gamma * x_calc + self.beta  ###multiplication-wise
-
-        rdic = {
-            "y": self.y,
-            "x_calc": x_calc,
-            "x": x,
-            "x_norm": x_norm,
-            "square": square
-        }
+        if self.is_training():
+            self.y, rdic = self._forward_training(x)
+        else:
+            self.y, rdic = self._forward_evaluation(x)
 
         return self.y, rdic
 
