@@ -11,8 +11,9 @@ class FullyConnectedLayer(Layer):
     def __init__(self, input_count, output_count):
         self.input_count = input_count
         self.output_count = output_count
-        self.w = np.zeros((output_count, input_count))
-        self.b = np.zeros(output_count)
+        seed = np.random.default_rng(420)
+        self.w = seed.normal(0, 2/(input_count+output_count), size=(output_count, input_count))
+        self.b = seed.normal(0, 2/output_count, size=output_count)
         super().__init__()
 
     def get_parameters(self):
@@ -68,7 +69,7 @@ class BatchNormalization(Layer):
             "global_variance": self.global_variance,
             "gamma": self.gamma,
             "beta": self.beta,
-            "epsilon": self.epsilon
+            "epsilon": np.array([self.epsilon])
         }
         return r_dic
 
@@ -161,8 +162,8 @@ class Sigmoid(Layer):
     """
 
     def get_parameters(self):
-        #return {"y": self.y}
-        return {"y": 0}
+        return {}
+        #return {"y": np.zeros(1)}
 
     def get_buffers(self):
         raise self.get_parameters()
@@ -189,8 +190,8 @@ class ReLU(Layer):
     """
 
     def get_parameters(self):
-        #return {"y": self.y}
-        return {"y": 0}
+        return {}
+        #return {"y": np.zeros(1)}
 
     def get_buffers(self):
         return self.get_parameters()
@@ -211,4 +212,4 @@ class ReLU(Layer):
                     element[...] = 1
         self.y_grad *= output_grad
 
-        return self.y_grad, {"y_grad": self.y_grad}
+        return self.y_grad, {"y": self.y_grad}
