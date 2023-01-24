@@ -24,7 +24,6 @@ class CrossEntropyLoss(Loss):
 
 
         #Calcul gradient
-        #self.input_grad = -1 * np.divide(target1hot, y_calc)
         y = target1hot.argmax(axis=1)
         m = y.shape[0]
         grad = softmax(x)

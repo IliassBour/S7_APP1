@@ -56,7 +56,7 @@ class BatchNormalization(Layer):
     def __init__(self, input_count, alpha=0.10):
         self.input_count = input_count
         self.alpha = alpha
-        self.epsilon = 1e-42 ### MAY NEED TO PUT A SMALLER NUMBER
+        self.epsilon = 1e-42
         self.gamma = np.zeros(input_count)
         self.beta = np.ones(input_count)
         self.global_mean = np.zeros(input_count)
@@ -163,7 +163,6 @@ class Sigmoid(Layer):
 
     def get_parameters(self):
         return {}
-        #return {"y": np.zeros(1)}
 
     def get_buffers(self):
         raise self.get_parameters()
@@ -191,7 +190,6 @@ class ReLU(Layer):
 
     def get_parameters(self):
         return {}
-        #return {"y": np.zeros(1)}
 
     def get_buffers(self):
         return self.get_parameters()
