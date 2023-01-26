@@ -39,14 +39,14 @@ def softmax(x):
     :param x: The input tensor (shape: (N, C))
     :return The softmax of x
     """
-    return np.exp(x)/np.sum(np.exp(x), axis=1, keepdims=True)
+    x_temp = np.copy(x)
+    return np.exp(x_temp)/np.sum(np.exp(x_temp), axis=1, keepdims=True)
 
 
 class MeanSquaredErrorLoss(Loss):
     """
     This class implements a mean squared error loss.
     """
-
     def calculate(self, x, target):
         """
         :param x: The input tensor (shape: any)
